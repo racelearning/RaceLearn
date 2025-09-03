@@ -8,10 +8,22 @@ mongoose.connect('mongodb+srv://racelearnuser:g56E2Ha4RnOqpED3@racelearndb.f4hg9
   .then(() => console.log('Connected to MongoDB!'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-// Serve React build (we’ll add this later)
+// API to save a course
+app.post('/api/courses', async (req, res) => {
+  const { title, description } = req.body;
+  try {
+    const course = new Course({ title, description });
+    await course.save();
+    res.status(201).json(course);
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to save course' });
+  }
+});
+
+// Serve React build
 app.use(express.static(path.join(__dirname, 'frontend/build')));
 
-// Handle React routing (we’ll add this later)
+// Handle React routing
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'frontend/build', 'index.html'));
 });

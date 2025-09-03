@@ -3,9 +3,23 @@ import React, { useState } from 'react';
 function App() {
   const [course, setCourse] = useState({ title: '', description: '' });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`Course Saved: ${course.title} - ${course.description}`);
+    try {
+      const response = await fetch('/api/courses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(course),
+      });
+      if (response.ok) {
+        alert('Course saved to database!');
+        setCourse({ title: '', description: '' }); // Clear form
+      } else {
+        alert('Error saving course');
+      }
+    } catch (error) {
+      alert('Network error');
+    }
   };
 
   return (
