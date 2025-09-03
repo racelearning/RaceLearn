@@ -1,7 +1,11 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
+const Course = require('./models/Course');
 const app = express();
+
+// Middleware to parse JSON bodies
+app.use(express.json());
 
 // Connect to MongoDB
 mongoose.connect('mongodb+srv://racelearnuser:g56E2Ha4RnOqpED3@racelearndb.f4hg9bw.mongodb.net/?retryWrites=true&w=majority&appName=RaceLearnDB', { useNewUrlParser: true, useUnifiedTopology: true })
@@ -17,6 +21,16 @@ app.post('/api/courses', async (req, res) => {
     res.status(201).json(course);
   } catch (error) {
     res.status(400).json({ error: 'Failed to save course' });
+  }
+});
+
+// API to get all courses
+app.get('/api/courses', async (req, res) => {
+  try {
+    const courses = await Course.find();
+    res.json(courses);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch courses' });
   }
 });
 
