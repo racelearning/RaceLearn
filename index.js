@@ -2,9 +2,11 @@ const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
 const Course = require('./models/Course');
+const User = require('./models/User');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const app = express();
 
-// Middleware to parse JSON bodies
 app.use(express.json());
 
 // Connect to MongoDB
@@ -12,8 +14,43 @@ mongoose.connect('mongodb+srv://racelearnuser:g56E2Ha4RnOqpED3@racelearndb.f4hg9
   .then(() => console.log('Connected to MongoDB!'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-// API to save a course
-app.post('/api/courses', async (req, res) => {
+const authenticateToken = (req, res, next) => {
+  const token = req.headers['authorization'];
+  if (!token) return res.status(401).json({ error: 'Access denied' });
+  jwt.verify(token, 'your_jwt_secret', (err, user) => {
+    if (err) return res.status(403).json({ error: 'Invalid token' });
+    req.user = user;
+    next();
+  });
+};
+
+app.post('/api/register', async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = new User({ username, password: hashedPassword });
+    await user.save();
+    res.status(201).json({ message: 'User registered' });
+  } catch (error) {
+    res.status(400).json({ error: 'Registration failed' });
+  }
+});
+
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const user = await User.findOne({ username });
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    const token = jwt.sign({ id: user._id }, 'your_jwt_secret', { expiresIn: '1h' });
+    res.json({ token });
+  } catch (error) {
+    res.status(400).json({ error: 'Login failed' });
+  }
+});
+
+app.post('/api/courses', authenticateToken, async (req, res) => {
   const { title, description } = req.body;
   try {
     const course = new Course({ title, description });
@@ -24,8 +61,7 @@ app.post('/api/courses', async (req, res) => {
   }
 });
 
-// API to get all courses
-app.get('/api/courses', async (req, res) => {
+app.get('/api/courses', authenticateToken, async (req, res) => {
   try {
     const courses = await Course.find();
     res.json(courses);
@@ -34,14 +70,32 @@ app.get('/api/courses', async (req, res) => {
   }
 });
 
-// Serve React build
+app.put('/api/courses/:id', authenticateToken, async (req, res) => {
+  const { title, description } = req.body;
+  try {
+    const course = await Course.findByIdAndUpdate(req.params.id, { title, description }, { new: true });
+    if (!course) return res.status(404).json({ error: 'Course not found' });
+    res.json(course);
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to update course' });
+  }
+});
+
+app.delete('/api/courses/:id', authenticateToken, async (req, res) => {
+  try {
+    const course = await Course.findByIdAndDelete(req.params.id);
+    if (!course) return res.status(404).json({ error: 'Course not found' });
+    res.json({ message: 'Course deleted' });
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to delete course' });
+  }
+});
+
 app.use(express.static(path.join(__dirname, 'frontend/build')));
 
-// Handle React routing
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'frontend/build', 'index.html'));
 });
 
-// Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`RaceLearn running on port ${PORT}`));
