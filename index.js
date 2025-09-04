@@ -14,7 +14,7 @@ mongoose.connect('mongodb+srv://racelearnuser:g56E2Ha4RnOqpED3@racelearndb.f4hg9
   .then(() => console.log('Connected to MongoDB!'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-const authenticateToken = (req, res, next) => {
+function authenticateToken(req, res, next) {
   const token = req.headers['authorization'];
   if (!token) return res.status(401).json({ error: 'Access denied' });
   jwt.verify(token, 'your_jwt_secret', (err, user) => {
@@ -22,7 +22,7 @@ const authenticateToken = (req, res, next) => {
     req.user = user;
     next();
   });
-};
+}
 
 app.post('/api/register', async (req, res) => {
   const { username, password } = req.body;
