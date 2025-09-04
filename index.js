@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const path = require('path');
 const Course = require('./models/Course');
 const User = require('./models/User');
+const Quiz = require('./models/Quiz');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const app = express();
@@ -90,6 +91,28 @@ app.delete('/api/courses/:id', authenticateToken, async (req, res) => {
     res.json({ message: 'Course deleted' });
   } catch (error) {
     res.status(400).json({ error: 'Failed to delete course' });
+  }
+});
+
+// Create a new quiz
+app.post('/api/quizzes', authenticateToken, async (req, res) => {
+  const { courseId, title, questions } = req.body;
+  try {
+    const quiz = new Quiz({ courseId, title, questions });
+    await quiz.save();
+    res.status(201).json(quiz);
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to create quiz' });
+  }
+});
+
+// Get quizzes for a course
+app.get('/api/quizzes/:courseId', authenticateToken, async (req, res) => {
+  try {
+    const quizzes = await Quiz.find({ courseId: req.params.courseId });
+    res.json(quizzes);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch quizzes' });
   }
 });
 
