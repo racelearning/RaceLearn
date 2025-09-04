@@ -135,27 +135,28 @@ function App() {
   };
 
   const handleRegister = async () => {
-    const username = prompt('Enter username:');
-    const password = prompt('Enter password:');
-    if (username && password) {
-      const response = await fetch('/api/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      });
-      if (response.ok) {
-        alert('Registration successful, please log in');
-      } else {
-        alert('Registration failed');
-      }
+  const username = prompt('Enter username:');
+  const password = prompt('Enter password:');
+  const email = prompt('Enter email:'); // New prompt for email
+  if (username && password && email) {
+    const response = await fetch('/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password, email }), // Include email
+    });
+    if (response.ok) {
+      alert('Registration successful, please log in');
+    } else {
+      alert('Registration failed');
     }
-  };
+  }
+};
 
-  const handleLogout = () => {
+  function handleLogout() {
     setToken(null);
     localStorage.removeItem('token');
     setProfile(null);
-  };
+  }
 
   const handleQuizSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

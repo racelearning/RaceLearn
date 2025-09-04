@@ -26,10 +26,10 @@ function authenticateToken(req, res, next) {
 }
 
 app.post('/api/register', async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, email } = req.body; // Include email
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ username, password: hashedPassword });
+    const user = new User({ username, password: hashedPassword, email }); // Include email
     await user.save();
     console.log('User registered:', username);
     res.status(201).json({ message: 'User registered' });
@@ -113,17 +113,6 @@ app.get('/api/quizzes/:courseId', authenticateToken, async (req, res) => {
     res.json(quizzes);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch quizzes' });
-  }
-});
-
-// Get user profile
-app.get('/api/profile', authenticateToken, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id).populate('createdCourses createdQuizzes');
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    res.json(user);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch profile' });
   }
 });
 
