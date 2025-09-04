@@ -6,9 +6,10 @@
     "build": "cd frontend && npm install && npm run build"
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^17.2.2",
     "express": "^4.17.1",
-    "mongoose": "^6.0.0",
     "jsonwebtoken": "^8.5.1",
-    "bcryptjs": "^2.4.3"
+    "mongoose": "^6.0.0"
   }
 }

@@ -1,5 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
+require('dotenv').config();
+const mongoURI = process.env.MONGODB_URI;
 const path = require('path');
 const Course = require('./models/Course');
 const User = require('./models/User');
@@ -7,13 +9,14 @@ const Quiz = require('./models/Quiz');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const app = express();
+const jwt = require('jsonwebtoken');
 
 app.use(express.json());
 
 // Connect to MongoDB
-mongoose.connect('mongodb+srv://racelearnuser:g56E2Ha4RnOqpED3@racelearndb.f4hg9bw.mongodb.net/?retryWrites=true&w=majority&appName=RaceLearnDB')
+mongoose.connect(mongoURI)
   .then(() => console.log('Connected to MongoDB!'))
-  .catch(err => console.error('MongoDB connection error:', err));
+  .catch(err => console.error('MongoDB connection error:', err.message));
 
 function authenticateToken(req, res, next) {
   const token = req.headers['authorization'];
@@ -46,7 +49,7 @@ app.post('/api/login', async (req, res) => {
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-    const token = jwt.sign({ id: user._id }, 'your_jwt_secret', { expiresIn: '1h' });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
     res.json({ token });
   } catch (error) {
     res.status(400).json({ error: 'Login failed' });
