@@ -10,7 +10,7 @@ const app = express();
 app.use(express.json());
 
 // Connect to MongoDB
-mongoose.connect('mongodb+srv://racelearnuser:g56E2Ha4RnOqpED3@racelearndb.f4hg9bw.mongodb.net/?retryWrites=true&w=majority&appName=RaceLearnDB', { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect('mongodb+srv://racelearnuser:g56E2Ha4RnOqpED3@racelearndb.f4hg9bw.mongodb.net/?retryWrites=true&w=majority&appName=RaceLearnDB')
   .then(() => console.log('Connected to MongoDB!'))
   .catch(err => console.error('MongoDB connection error:', err));
 
@@ -30,8 +30,10 @@ app.post('/api/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User({ username, password: hashedPassword });
     await user.save();
+    console.log('User registered:', username);
     res.status(201).json({ message: 'User registered' });
   } catch (error) {
+    console.error('Registration error:', error.message);
     res.status(400).json({ error: 'Registration failed' });
   }
 });
