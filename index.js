@@ -116,6 +116,29 @@ app.get('/api/quizzes/:courseId', authenticateToken, async (req, res) => {
   }
 });
 
+// Get user profile
+app.get('/api/profile', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).populate('createdCourses createdQuizzes');
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch profile' });
+  }
+});
+
+// Update user profile
+app.put('/api/profile', authenticateToken, async (req, res) => {
+  const { email, fullName } = req.body;
+  try {
+    const user = await User.findByIdAndUpdate(req.user.id, { email, fullName }, { new: true, runValidators: true });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user);
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to update profile' });
+  }
+});
+
 app.use(express.static(path.join(__dirname, 'frontend/build')));
 
 app.get('*', (req, res) => {

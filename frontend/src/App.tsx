@@ -20,6 +20,15 @@ interface Quiz {
   questions: Question[];
 }
 
+interface UserProfile {
+  _id: string;
+  username: string;
+  email: string;
+  fullName: string;
+  createdCourses: Course[];
+  createdQuizzes: Quiz[];
+}
+
 function App() {
   const [course, setCourse] = useState<Partial<Course>>({ title: '', description: '' });
   const [courses, setCourses] = useState<Course[]>([]);
@@ -27,6 +36,7 @@ function App() {
   const [quiz, setQuiz] = useState<Partial<Quiz>>({ title: '', questions: [{ question: '', options: ['', '', '', ''], correctAnswer: '' }] });
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
 
   useEffect(() => {
@@ -35,8 +45,19 @@ function App() {
         .then(res => res.json())
         .then(data => setCourses(data))
         .catch(error => console.error('Error fetching courses:', error));
+      fetchProfile();
     }
   }, [token]);
+
+  const fetchProfile = async () => {
+    if (token) {
+      const response = await fetch('/api/profile', { headers: { 'authorization': token } });
+      if (response.ok) {
+        const data = await response.json();
+        setProfile(data);
+      }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +78,7 @@ function App() {
         setCourses(courses.map(c => c._id === (editCourseId || updatedCourse._id) ? updatedCourse : c));
         setCourse({ title: '', description: '' });
         setEditCourseId(null);
+        fetchProfile(); // Update profile with new course
       } else {
         alert('Error saving/updating course');
       }
@@ -83,6 +105,7 @@ function App() {
         const response = await fetch(`/api/courses/${id}`, { method: 'DELETE', headers: { 'authorization': token } });
         if (response.ok) {
           setCourses(courses.filter(c => c._id !== id));
+          fetchProfile(); // Update profile after deletion
         } else {
           alert('Error deleting course');
         }
@@ -131,6 +154,7 @@ function App() {
   const handleLogout = () => {
     setToken(null);
     localStorage.removeItem('token');
+    setProfile(null);
   };
 
   const handleQuizSubmit = async (e: React.FormEvent) => {
@@ -150,6 +174,7 @@ function App() {
         setQuizzes([...quizzes, newQuiz]);
         setQuiz({ title: '', questions: [{ question: '', options: ['', '', '', ''], correctAnswer: '' }] });
         setSelectedCourseId(null);
+        fetchProfile(); // Update profile with new quiz
       } else {
         alert('Error creating quiz');
       }
@@ -165,6 +190,29 @@ function App() {
         const data = await response.json();
         setQuizzes(data);
       }
+    }
+  };
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token || !profile) return;
+    const email = prompt('Enter new email:') || profile.email;
+    const fullName = prompt('Enter new full name:') || profile.fullName;
+    try {
+      const response = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'authorization': token },
+        body: JSON.stringify({ email, fullName }),
+      });
+      if (response.ok) {
+        const updatedProfile = await response.json();
+        setProfile(updatedProfile);
+        alert('Profile updated successfully');
+      } else {
+        alert('Error updating profile');
+      }
+    } catch (error) {
+      alert('Network error');
     }
   };
 
@@ -200,6 +248,18 @@ function App() {
             </button>
           </form>
           <button onClick={handleLogout} style={{ padding: '5px 10px', marginTop: '10px' }}>Logout</button>
+
+          {profile && (
+            <div style={{ marginTop: '20px' }}>
+              <h2>My Profile</h2>
+              <p>Username: {profile.username}</p>
+              <p>Email: {profile.email}</p>
+              <p>Full Name: {profile.fullName}</p>
+              <p>Created Courses: {profile.createdCourses.length}</p>
+              <p>Created Quizzes: {profile.createdQuizzes.length}</p>
+              <button onClick={handleUpdateProfile} style={{ padding: '5px 10px' }}>Update Profile</button>
+            </div>
+          )}
 
           <h2>Saved Courses</h2>
           <ul>
